@@ -1,13 +1,18 @@
 require('dotenv').config();
 
 const express = require('express');
-const app = express();
+const {Router} = require('express');
+const serverless = require('serverless-http');
+// import express, { Router } from "express";
+//import serverless from "serverless-http";
+const api = express();
+const router = Router();
 
 const cors = require('cors');
-app.use(cors());
+api.use(cors());
 
-app.use(express.json({ limit: '50mb' }));
-app.use(express.urlencoded({ extended: true, limit: '50mb' }));
+api.use(express.json({ limit: '50mb' }));
+api.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
 const multer = require('multer');
 const upload = multer({ storage: multer.memoryStorage() });
@@ -27,7 +32,7 @@ const firebaseConfig = {
 initializeApp(firebaseConfig);
 const storage = getStorage();
 
-app.post('/upload_model', upload.fields([{ name: 'model.json' }, { name: 'model.weights.bin' }]), async (req, res) => {
+router.post('/upload_model', upload.fields([{ name: 'model.json' }, { name: 'model.weights.bin' }]), async (req, res) => {
     try {
         if (req.files['model.json'] && req.files['model.json'][0]) {
             let file = req.files['model.json'][0];
@@ -56,7 +61,7 @@ app.post('/upload_model', upload.fields([{ name: 'model.json' }, { name: 'model.
 
 });
 
-app.post('/upload_dataset', async (req, res) => {
+router.post('/upload_dataset', async (req, res) => {
     try {
         let path = req.body.path;
         let jsonBlob = new Blob([req.body.json], { type: 'application/json' });
@@ -79,7 +84,7 @@ app.post('/upload_dataset', async (req, res) => {
 
 });
 
-app.get('/getfile', async (req, res) => {
+router.get('/getfile', async (req, res) => {
     try {
         let path = req.query.path;
         const storageRef = ref(storage, path);
@@ -99,8 +104,17 @@ app.get('/getfile', async (req, res) => {
 
 });
 
-// Iniciar el servidor
-const port = process.env.PORT;
-app.listen(port, () => {
-  console.log(`Servidor ejecutándose en puerto ${port}`);
+router.get('/prueba', (req, res) => {
+    res.json({
+        message: 'Prueba exitosa'
+    });
 });
+
+api.use("/.netlify/functions/index", router);
+
+// Iniciar el servidor
+/*const port = process.env.PORT;
+api.listen(port, () => {
+  console.log(`Servidor ejecutándose en puerto ${port}`);
+});*/
+module.exports.handler = serverless(api);
