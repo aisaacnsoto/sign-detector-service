@@ -19,6 +19,7 @@ const upload = multer({ storage: multer.memoryStorage() });
 
 const { initializeApp } = require("firebase/app");
 const { getStorage, ref, getDownloadURL, uploadBytesResumable, uploadBytes } = require("firebase/storage");
+const { getFirestore, collection, addDoc, getDocs, query } = require("firebase/firestore");
 
 const firebaseConfig = {
     apiKey: process.env.API_KEY,
@@ -29,8 +30,9 @@ const firebaseConfig = {
     appId: process.env.APP_ID
 };
 
-initializeApp(firebaseConfig);
+const app = initializeApp(firebaseConfig);
 const storage = getStorage();
+const db = getFirestore(app);
 
 router.post('/upload_model', upload.fields([{ name: 'model.json' }, { name: 'model.weights.bin' }]), async (req, res) => {
     try {
@@ -64,12 +66,20 @@ router.post('/upload_model', upload.fields([{ name: 'model.json' }, { name: 'mod
 router.post('/upload_dataset', async (req, res) => {
     try {
         let path = req.body.path;
+        let nombre_archivo = req.body.nombre_archivo;
         let jsonBlob = new Blob([req.body.json], { type: 'application/json' });
         
         let metadata = { contentType: 'application/json' };
 
         let storageRef = ref(storage, path);
         await uploadBytes(storageRef, jsonBlob, metadata);
+
+        const downloadURL = await getDownloadURL(storageRef);
+
+        const docRef = await addDoc(collection(db, "datasets"), {
+            nombre: nombre_archivo,
+            url: downloadURL,
+        });
 
         res.json({
             message: 'Dataset subido correctamente'
@@ -104,9 +114,47 @@ router.get('/getfile', async (req, res) => {
 
 });
 
-router.get('/prueba', (req, res) => {
+router.get('/prueba', async(req, res) => {
+    try {
+        const docRef = await addDoc(collection(db, "datasets"), {
+            nombre: "el nombre",
+            url: "el url",
+        });
+        console.log("Document written with ID: ", docRef.id);
+      } catch (e) {
+        console.error("Error adding document: ", e);
+      }
     res.json({
         message: 'Prueba exitosa'
+    });
+});
+
+router.get('/save-doc', async(req, res) => {
+    try {
+        const docRef = await addDoc(collection(db, "datasets"), {
+            nombre: "el nombre",
+            url: "el url",
+        });
+        console.log("Document written with ID: ", docRef.id);
+      } catch (e) {
+        console.error("Error adding document: ", e);
+      }
+    res.json({
+        message: 'Prueba exitosa'
+    });
+});
+
+router.get('/list-docs', async(req, res) => {
+    const q = query(collection(db, "datasets"));
+    const querySnapshot = await getDocs(q);
+    let urls = [];
+    querySnapshot.forEach((doc) => {
+        let data = doc.data();
+        urls.push(data.url);
+    });
+    res.json({
+        message: 'Se ha recuperado correctamente los datos.',
+        urls
     });
 });
 
