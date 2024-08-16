@@ -76,10 +76,12 @@ router.post('/upload_dataset', async (req, res) => {
 
         const downloadURL = await getDownloadURL(storageRef);
 
-        const docRef = await addDoc(collection(db, "datasets"), {
-            nombre: nombre_archivo,
-            url: downloadURL,
-        });
+        if (nombre_archivo) {
+            const docRef = await addDoc(collection(db, "datasets"), {
+                nombre: nombre_archivo,
+                url: downloadURL,
+            });
+        }
 
         res.json({
             message: 'Dataset subido correctamente'
