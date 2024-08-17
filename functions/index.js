@@ -117,21 +117,12 @@ router.get('/getfile', async (req, res) => {
 });
 
 router.get('/prueba', async(req, res) => {
-    try {
-        const docRef = await addDoc(collection(db, "datasets"), {
-            nombre: "el nombre",
-            url: "el url",
-        });
-        console.log("Document written with ID: ", docRef.id);
-      } catch (e) {
-        console.error("Error adding document: ", e);
-      }
     res.json({
         message: 'Prueba exitosa'
     });
 });
 
-router.get('/save-doc', async(req, res) => {
+/*router.get('/save-doc', async(req, res) => {
     try {
         const docRef = await addDoc(collection(db, "datasets"), {
             nombre: "el nombre",
@@ -144,7 +135,7 @@ router.get('/save-doc', async(req, res) => {
     res.json({
         message: 'Prueba exitosa'
     });
-});
+});*/
 
 router.get('/list-docs', async(req, res) => {
     const q = query(collection(db, "datasets"));
